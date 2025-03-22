@@ -27,6 +27,7 @@ public class User {
         this.stripeCustomerId =stripeCustomerId;
     }
 
+    public User(){}
 
     public String getUserId() {
         return userId;

@@ -8,8 +8,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 
+// admin/api/reports
+
 @RestController
-@RequestMapping("/admin/api/reports")
+@RequestMapping("/api/reports")
 public class ReportController {
 
     @Autowired
