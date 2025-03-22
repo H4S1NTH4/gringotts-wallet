@@ -21,11 +21,13 @@ public class GoalService {
     }
 
     public List<Goal> getAllGoals() {
+
         return goalRepository.findAll();
     }
 
 
-    public List<Goal> getUserGoals(String userId) {
+    public List<Goal> getUserGoals(String userId)
+    {
         return goalRepository.findGoalsByUserId(userId);
     }
 

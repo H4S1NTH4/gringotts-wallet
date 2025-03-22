@@ -1,7 +1,9 @@
 package com.example.finance_tracker.Service;
 import com.example.finance_tracker.Entity.Transaction;
+import com.example.finance_tracker.Entity.User;
 import com.example.finance_tracker.Repository.CategoryRepository;
 import com.example.finance_tracker.Repository.TransactionRepository;
+import com.example.finance_tracker.Repository.UserRepository;
 import jakarta.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -9,15 +11,19 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RecurringTransactionService {
 
     @Autowired
     private TransactionRepository transactionRepository;
-
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private EmailService emailService;
 
     // Method to calculate the next due date based on recurrence pattern
     public LocalDateTime calculateNextDueDate(LocalDateTime currentDate, Transaction.RecurrencePattern recurrencePattern) {
@@ -31,8 +37,9 @@ public class RecurringTransactionService {
     }
 
     // Scheduled task to process recurring transactions
-    @Scheduled(cron = "0 0 * * * *")  // Run in every hour  // second minute hour day month day_of_week  *- evry  , 0 -0th
+    @Scheduled(cron = "0 0 * * * *")  // Run in every min  // second minute hour day month day_of_week  *- evry  , 0 -0th
     public void processRecurringTransactions() {
+        System.out.println("Processing recurring transactions");
         // Fetch transactions that are marked as recurring
         List<Transaction> recurringTransactions = transactionRepository.findByRecurringTrue();
 
@@ -68,6 +75,15 @@ public class RecurringTransactionService {
         newTransaction.setRecurring(false);  // This is a one-time transaction, not recurring
         newTransaction.setRecurrencePattern(recurringTransaction.getRecurrencePattern());
         newTransaction.setNextDueDate(null);  // No need to track next due date for the one-time transaction
+
+        Optional<User> user = userRepository.findById(recurringTransaction.getUserId());
+
+        user.ifPresent(u -> {
+            // Send email to user if present
+            emailService.sendEmail(u.getEmail(), "Recurring Transaction Record Alert",
+                    "This email is to notify that a recurrence transaction entry in Finance Tracker Application.");
+        });
+
 
         transactionRepository.save(newTransaction);  // Save the new transaction
     }

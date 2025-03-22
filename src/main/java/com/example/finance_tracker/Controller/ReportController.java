@@ -9,12 +9,11 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/admin/api/reports")
 public class ReportController {
 
     @Autowired
     TransactionService transactionService;
-
 
     //Get
     @GetMapping("user/transaction")
@@ -27,7 +26,7 @@ public class ReportController {
         }
     }
     //Get
-    @GetMapping("all/transaction")
+    @GetMapping("/all/transaction")
     public ResponseEntity<?> getAllTransactionSumByType(@RequestParam String transactionType) {
         try {
             BigDecimal transactionSum = transactionService.calculateAllTransactions(transactionType);

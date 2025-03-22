@@ -20,7 +20,7 @@ public class Goal {
         private GoalStatus goalStatus;
 
     public enum GoalStatus {
-        COMPLETED, ONGOING
+        COMPLETED, ONGOING, NOT_STARTED
     }
     public Goal(String userId, BigDecimal amount, BigDecimal collectedAmount, LocalDate startDate, LocalDate deadLine, String description,GoalStatus goalStatus) {
         this.userId = userId;
@@ -31,6 +31,7 @@ public class Goal {
         this.description = description;
         this.goalStatus =goalStatus;
     }
+    public Goal(){}
 
     public String getGoalId() {
         return goalId;

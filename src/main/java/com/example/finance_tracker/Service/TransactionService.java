@@ -38,6 +38,8 @@ public class TransactionService {
     private BudgetService budgetService;
     @Autowired
     private CurrencyService currencyService;
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     public TransactionService(TransactionRepository transactionRepository, UserValidation userValidation, TransactionValidation transactionValidation,
@@ -113,6 +115,9 @@ public class TransactionService {
 
         transaction.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
+
+        //send an email to user
+        emailService.sendEmail(user.getEmail(),"Automatic Transaction Record Alert","This email is to notify that a transaction created  from your Stripe Wallet is Successfully Recorded in Finance Tracker Application.");
 
         System.out.println("Automatic Transaction created from Stripe Waller Transaction");
         transaction.printTransaction();
