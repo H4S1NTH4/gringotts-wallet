@@ -1,5 +1,6 @@
 package com.example.finance_tracker.Controller;
 
+import com.example.finance_tracker.DTO.TransactionResponseDTO;
 import com.example.finance_tracker.Entity.Transaction;
 import com.example.finance_tracker.Service.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,7 +43,7 @@ public class TransactionController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getTransactionById(@PathVariable String id) {
         try {
-            Transaction transaction = transactionService.getTransactionById(id);
+            TransactionResponseDTO transaction = transactionService.getTransactionById(id);
             return ResponseEntity.ok(transaction);
         } catch (RuntimeException e) {
             return ResponseEntity.status(404).body(e.getMessage()); // Returns "Transaction not found" message
@@ -55,9 +56,6 @@ public class TransactionController {
         List<Transaction> transactions = transactionService.getTransactionsByUserId();
         return ResponseEntity.ok(transactions);
     }
-
-
-
 
      //Update transaction.
     @PutMapping("/{id}")
@@ -72,7 +70,6 @@ public class TransactionController {
         }
     }
 
-
      //Delete transaction by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTransaction(@PathVariable String id) {
@@ -83,7 +80,5 @@ public class TransactionController {
             return ResponseEntity.status(404).body(e.getMessage()); // Transaction not found
         }
     }
-
-
 
 }
