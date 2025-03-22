@@ -96,13 +96,14 @@ public class StripeWebhookController {
             //transaction.setRecurrencePattern("HOURLY");  // Set recurrence pattern from your logic
             //transaction.setRecurringEndDate("2025-03-09T00:00:00");  // Example end date
 
-            transaction.printTransaction();
+            //transaction.printTransaction();
 
-            //crate new transaction and save to db
-            transactionService.createAutomatedTransaction(transaction,paymentIntent.getCustomer());
+            //crate new transaction call to sevice
+        System.out.println("Received payment intent and calling service ");
 
-            System.out.println("transaction: " + transaction);
-            System.out.println("Received payment intent Stripe Event and created transaction: ");
+        transactionService.createAutomatedTransaction(transaction,paymentIntent.getCustomer());
+
+//            System.out.println("transaction: " + transaction);
 
 
 

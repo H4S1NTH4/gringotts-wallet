@@ -31,18 +31,14 @@ public class TransactionController {
         }
     }
 
-    /**
-     * Retrieve all transactions.
-     */
+     //get all transactions.
     @GetMapping
     public ResponseEntity<List<Transaction>> getAllTransactions() {
         List<Transaction> transactions = transactionService.getAllTransactions();
         return ResponseEntity.ok(transactions);
     }
 
-    /**
-     * Retrieve a transaction by ID.
-     */
+     //get a transaction by ID.
     @GetMapping("/{id}")
     public ResponseEntity<?> getTransactionById(@PathVariable String id) {
         try {
@@ -53,9 +49,17 @@ public class TransactionController {
         }
     }
 
-    /**
-     * Update an existing transaction.
-     */
+    //get all transactions for a specific user.
+    @GetMapping("/user")
+    public ResponseEntity<List<Transaction>> getTransactionsByUserId() {
+        List<Transaction> transactions = transactionService.getTransactionsByUserId();
+        return ResponseEntity.ok(transactions);
+    }
+
+
+
+
+     //Update transaction.
     @PutMapping("/{id}")
     public ResponseEntity<?> updateTransaction(@PathVariable String id, @RequestBody Transaction updatedTransaction) {
         try {
@@ -68,9 +72,8 @@ public class TransactionController {
         }
     }
 
-    /**
-     * Delete a transaction by ID.
-     */
+
+     //Delete transaction by ID
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTransaction(@PathVariable String id) {
         try {
@@ -81,12 +84,6 @@ public class TransactionController {
         }
     }
 
-    /**
-     * Retrieve all transactions for a specific user.
-     */
-    @GetMapping("/user")
-    public ResponseEntity<List<Transaction>> getTransactionsByUserId() {
-        List<Transaction> transactions = transactionService.getTransactionsByUserId();
-        return ResponseEntity.ok(transactions);
-    }
+
+
 }

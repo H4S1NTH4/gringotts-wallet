@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -52,7 +53,7 @@ public class TransactionService {
 
         //get the current user from the token
         User user = userValidation.getUserFromToken();
-        Category category = categoryRepository.findByName(transaction.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
+        Category category = categoryRepository.findByName(transaction.getCategoryRef()).orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
         transaction.setTransactionCategory(category);
         transaction.setUserId(user.getUserId());
@@ -68,11 +69,15 @@ public class TransactionService {
 
         transaction.setCreatedAt(LocalDateTime.now());
 
-        //update budget according to transaction
-        Optional<Budget> optionalBudget = budgetRepository.findByUserIdAndCategoryIdAndEndDateAfter(user.getUserId(), new ObjectId(category.getCategoryId()), transaction.getTransactionDate().toLocalDate());
-        optionalBudget.ifPresent(
-                budget -> budgetService.updateBudgetSpend(budget, transaction.getTransactionAmount())
-        );
+        if(transaction.getTransactionType()== Transaction.TransactionType.EXPENSE){
+            //update budget according to transaction
+            Optional<Budget> optionalBudget = budgetRepository.findByUserIdAndCategoryIdAndEndDateAfter(user.getUserId(), new ObjectId(category.getCategoryId()), transaction.getTransactionDate().toLocalDate());
+            optionalBudget.ifPresent(
+                    budget -> budgetService.updateBudgetSpend(budget, transaction.getTransactionAmount())
+            );
+
+        }
+
 
 
         return transactionRepository.save(transaction);
@@ -81,29 +86,33 @@ public class TransactionService {
     //service method to create automatic transactions from stripe wallet
     public void createAutomatedTransaction(Transaction transaction, String stripeCustomerId) {
         //transactionValidation.validateTransaction(transaction);  // Validate transaction fields
-
+        System.out.println("Service called");
         //get the current user from the token
         User user = userRepository.findByStripeCustomerId(stripeCustomerId).orElseThrow(()-> new RuntimeException("User not found"));
         Category category = categoryRepository.findByName(transaction.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
-
+        System.out.println("User found: " + user.getUserId());
+        System.out.println("Category found: " + category.getCategoryId());
         transaction.setTransactionCategory(category);
         transaction.setUserId(user.getUserId());
 
 //        if (transaction.getRecurring() == null) {
 //            transaction.setRecurring(false); // Default to false if not provided
 //        }
+//        else{
+//            LocalDateTime nextDueDate = recurringTransactionService.calculateNextDueDate(LocalDateTime.now(),transaction.getRecurrencePattern());
+//            transaction.setNextDueDate(nextDueDate);
+//        }
 
-        //LocalDateTime nextDueDate = recurringTransactionService.calculateNextDueDate(LocalDateTime.now(),transaction.getRecurrencePattern());
-        //transaction.setNextDueDate(nextDueDate);
-
-        transaction.setCreatedAt(LocalDateTime.now());
 
         //update budget according to transaction
         Optional<Budget> optionalBudget = budgetRepository.findByUserIdAndCategoryIdAndEndDateAfter(user.getUserId(), new ObjectId(category.getCategoryId()), transaction.getTransactionDate().toLocalDate());
         optionalBudget.ifPresent(budget -> budgetService.updateBudgetSpend(budget, transaction.getTransactionAmount()));
 
+        transaction.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
+
         System.out.println("Automatic Transaction created from Stripe Waller Transaction");
+        transaction.printTransaction();
     }
 
 
@@ -155,7 +164,24 @@ public class TransactionService {
         transactionRepository.deleteById(transactionId);
     }
 
-    //Validate transaction has the required fields.
+    public BigDecimal calculateUserTransactions(String transactionType) {
+        User user = userValidation.getUserFromToken();
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionType(user.getUserId(), Transaction.TransactionType.valueOf(transactionType));
+
+        return transactions.stream()
+                .map(Transaction::getTransactionAmount) // Extract the amount
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum up amounts
+    }
+
+    public BigDecimal calculateAllTransactions(String transactionType) {
+        User user = userValidation.getUserFromToken();
+        List<Transaction> transactions = transactionRepository.findByTransactionType(Transaction.TransactionType.valueOf(transactionType));
+
+        return transactions.stream()
+                .map(Transaction::getTransactionAmount) // Extract the amount
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum up amounts
+    }
+
 
 
 }

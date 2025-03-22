@@ -22,5 +22,6 @@ public interface TransactionRepository extends MongoRepository<Transaction, Stri
     // Find recurring transactions
     List<Transaction> findByRecurringTrue();
 
+    List<Transaction> findByUserIdAndTransactionType(String userId, Transaction.TransactionType transactionType);
 }
 

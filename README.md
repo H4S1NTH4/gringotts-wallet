@@ -14,3 +14,10 @@ How to Run Unit Tests
 
 mvn test //all tests
 mvn test -Dtest=TransactionControllerTest  //specific test
+
+
+//http://hasinthafinancetracker999.ngrok.io/webhook/stripe
+
+   stripe listen --forward-to http://localhost:8080/api/stripe/webhook
+stripe trigger payment_intent.succeeded 
+   stripe trigger checkout.session.completed

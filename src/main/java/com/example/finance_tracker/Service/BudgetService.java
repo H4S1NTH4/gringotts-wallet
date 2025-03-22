@@ -66,15 +66,32 @@ public class BudgetService {
     public Budget updateBudget(String budgetId, Budget budgetDetails) {
 
         Budget budget = getBudgetById(budgetId);
-        Category category = categoryRepository.findByName(budgetDetails.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
 
-        BigDecimal newSpentAmount = budget.getSpentAmount().add(budgetDetails.getSpentAmount());
+//        BigDecimal newSpentAmount = budget.getSpentAmount().add(budgetDetails.getSpentAmount());
+//        budget.setAmount(budgetDetails.getAmount());
+//        budget.setStartDate(budgetDetails.getStartDate());
+//        budget.setEndDate(budgetDetails.getEndDate());
+//        budget.setSpentAmount(newSpentAmount);
 
-        budget.setCategory(category);
-        budget.setAmount(budgetDetails.getAmount());
-        //budget.setStartDate(budgetDetails.getStartDate());
-        budget.setEndDate(budgetDetails.getEndDate());
-        budget.setSpentAmount(newSpentAmount);
+        if (budgetDetails.getCategoryRef() != null) {
+            Category category = categoryRepository.findByName(budgetDetails.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
+            budget.setCategory(category);
+            budget.setCategoryRef(budgetDetails.getCategoryRef());
+        }
+
+        if (budgetDetails.getAmount() != null) {
+            budget.setAmount(budgetDetails.getAmount());
+        }
+        if (budgetDetails.getStartDate() != null) {
+            budget.setStartDate(budgetDetails.getStartDate());
+        }
+        if (budgetDetails.getEndDate() != null) {
+            budget.setEndDate(budgetDetails.getEndDate());
+        }
+        if (budgetDetails.getSpentAmount() != null) {
+            BigDecimal newSpentAmount = budget.getSpentAmount().add(budgetDetails.getSpentAmount());
+            budget.setSpentAmount(newSpentAmount);
+        }
 
         return budgetRepository.save(budget);
     }
