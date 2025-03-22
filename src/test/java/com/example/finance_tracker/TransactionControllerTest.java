@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
+@SpringBootTest
 class TransactionControllerTest {
 
     @Mock
@@ -81,7 +82,7 @@ class TransactionControllerTest {
         ResponseEntity<?> response = transactionController.getTransactionById("1");
 
         assertEquals(200, response.getStatusCodeValue());
-        assertEquals(transaction, response.getBody());
+        assertEquals(transactionResponseDTO, response.getBody()); // Assert that the DTO is returned
     }
 
     @Test
@@ -93,6 +94,7 @@ class TransactionControllerTest {
         assertEquals(404, response.getStatusCodeValue());
         assertEquals("Transaction not found with ID: 1", response.getBody());
     }
+
 
     @Test
     void testUpdateTransaction_Success() {

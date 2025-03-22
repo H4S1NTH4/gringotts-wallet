@@ -109,7 +109,7 @@ public class BudgetService {
         budgetRepository.deleteById(id);
     }
 
-    //Check if user is exceeding budget (Now updates spentAmount)
+    //Check if user is exceeding budget
     public boolean isExceedingBudget(Budget budget) {
         return  budget.getSpentAmount().compareTo(budget.getAmount()) > 0;
     }
