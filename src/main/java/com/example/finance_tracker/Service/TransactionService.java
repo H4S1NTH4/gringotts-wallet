@@ -1,5 +1,6 @@
 package com.example.finance_tracker.Service;
 
+import com.example.finance_tracker.DTO.TransactionResponseDTO;
 import com.example.finance_tracker.Entity.Budget;
 import com.example.finance_tracker.Entity.Category;
 import com.example.finance_tracker.Entity.Transaction;
@@ -35,6 +36,8 @@ public class TransactionService {
     private BudgetRepository budgetRepository;
     @Autowired
     private BudgetService budgetService;
+    @Autowired
+    private CurrencyService currencyService;
 
     @Autowired
     public TransactionService(TransactionRepository transactionRepository, UserValidation userValidation, TransactionValidation transactionValidation,
@@ -122,9 +125,28 @@ public class TransactionService {
     }
 
     //Find a transaction by its ID.
-    public Transaction getTransactionById(String transactionId) {
-        return transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with ID: " + transactionId));
+    public TransactionResponseDTO getTransactionById(String transactionId) {
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found with ID: " + transactionId));
+
+        User user = userValidation.getUserFromToken();
+        String userCurrency = user.getCurrency();
+
+        BigDecimal convertedAmount = currencyService.convertCurrency(userCurrency, transaction.getTransactionAmount());
+// Map the Transaction to TransactionResponseDTO
+        return new TransactionResponseDTO(
+                transaction.getTransactionId(),
+                transaction.getUserId(),
+                transaction.getTransactionType().name(),
+                transaction.getTransactionCategory().getName(),
+                transaction.getTransactionAmount(),
+                convertedAmount,
+                userCurrency,
+                transaction.getTransactionDescription(),
+                transaction.getCategoryRef()
+        );
+
     }
 
     // Retrieve all transactions for a specific user.

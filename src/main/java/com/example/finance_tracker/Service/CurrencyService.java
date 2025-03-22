@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Map;
 
 @Service
@@ -19,14 +21,15 @@ public class CurrencyService {
         this.restTemplate = restTemplate;
     }
 
-    public double convertCurrency(String userCurrency, double amount) {
+    public BigDecimal convertCurrency(String userCurrency, BigDecimal amount) {
         String url = "https://v6.exchangerate-api.com/v6/" + apiKey + "/latest/USD";
         ExchangeRateResponse response = restTemplate.getForObject(url, ExchangeRateResponse.class);
 
         if (response != null && "success".equals(response.getResult())) {
             Map<String, Double> rates = response.getConversion_rates();
             if (rates.containsKey(userCurrency)) {
-                return amount * rates.get(userCurrency);
+                BigDecimal rate = new BigDecimal(rates.get(userCurrency));
+                return amount.multiply(rate).setScale(2, RoundingMode.HALF_UP); // Round to 2 decimal places
             } else {
                 throw new RuntimeException("Currency not found: " + userCurrency);
             }

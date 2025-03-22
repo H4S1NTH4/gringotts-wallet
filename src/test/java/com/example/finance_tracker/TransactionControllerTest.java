@@ -1,6 +1,7 @@
 package com.example.finance_tracker;
 
 import com.example.finance_tracker.Controller.TransactionController;
+import com.example.finance_tracker.DTO.TransactionResponseDTO;
 import com.example.finance_tracker.Entity.Transaction;
 import com.example.finance_tracker.Service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,12 +29,14 @@ class TransactionControllerTest {
     private TransactionController transactionController;
 
     private Transaction transaction;
+    private TransactionResponseDTO transactionResponseDTO;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
         transaction = new Transaction();
+        transactionResponseDTO = new TransactionResponseDTO();
         transaction.setTransactionId("1");
         transaction.setTransactionAmount(BigDecimal.valueOf(100.0));
         transaction.setTransactionDescription("Test Transaction");
