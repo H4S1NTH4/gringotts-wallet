@@ -110,9 +110,8 @@ public class BudgetService {
     }
 
     //Check if user is exceeding budget (Now updates spentAmount)
-    public boolean isExceedingBudget(Budget budget, BigDecimal newExpense) {
-        BigDecimal newTotal = budget.getSpentAmount().add(newExpense);
-        return newTotal.compareTo(budget.getAmount()) > 0;
+    public boolean isExceedingBudget(Budget budget) {
+        return  budget.getSpentAmount().compareTo(budget.getAmount()) > 0;
     }
 
     public Optional<Budget> getBudgetForUserAndCategory(String categoryId) {
