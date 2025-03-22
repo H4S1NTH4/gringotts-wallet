@@ -140,11 +140,17 @@ public class TransactionService {
                 transaction.getUserId(),
                 transaction.getTransactionType().name(),
                 transaction.getTransactionCategory().getName(),
-                transaction.getTransactionAmount(),
-                convertedAmount,
-                userCurrency,
+                transaction.getTransactionDate(),
+                transaction.getTags(),
+                transaction.getRecurring(),
+                transaction.getRecurrencePattern(),
+                convertedAmount,//transaction.getTransactionAmount(), // used the user's prefere currency
                 transaction.getTransactionDescription(),
-                transaction.getCategoryRef()
+                transaction.getCategoryRef(),
+                transaction.getNextDueDate(),
+                transaction.getRecurringEndDate(),
+                transaction.getCreatedAt(),
+                transaction.getUpdatedAt()
         );
 
     }

@@ -76,7 +76,7 @@ class TransactionControllerTest {
 
     @Test
     void testGetTransactionById_Found() {
-        when(transactionService.getTransactionById("1")).thenReturn(transaction);
+        when(transactionService.getTransactionById("1")).thenReturn(transactionResponseDTO);
 
         ResponseEntity<?> response = transactionController.getTransactionById("1");
 
