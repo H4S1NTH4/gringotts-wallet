@@ -10,7 +10,7 @@ public class EmailService {
 
     @Autowired
     private JavaMailSender mailSender;
-    @Value("${EMAIL}")
+    @Value("${spring.mail.username}")
     private String senderMail;
 
     public void sendEmail(String to, String subject, String body) {
