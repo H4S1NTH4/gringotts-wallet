@@ -1,5 +1,6 @@
 package com.example.finance_tracker.Service;
 
+import com.example.finance_tracker.DTO.TransactionResponseDTO;
 import com.example.finance_tracker.Entity.Budget;
 import com.example.finance_tracker.Entity.Category;
 import com.example.finance_tracker.Entity.Transaction;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,6 +36,10 @@ public class TransactionService {
     private BudgetRepository budgetRepository;
     @Autowired
     private BudgetService budgetService;
+    @Autowired
+    private CurrencyService currencyService;
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     public TransactionService(TransactionRepository transactionRepository, UserValidation userValidation, TransactionValidation transactionValidation,
@@ -52,7 +58,7 @@ public class TransactionService {
 
         //get the current user from the token
         User user = userValidation.getUserFromToken();
-        Category category = categoryRepository.findByName(transaction.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
+        Category category = categoryRepository.findByName(transaction.getCategoryRef()).orElseThrow(() -> new IllegalArgumentException("Category not found"));
 
         transaction.setTransactionCategory(category);
         transaction.setUserId(user.getUserId());
@@ -68,11 +74,15 @@ public class TransactionService {
 
         transaction.setCreatedAt(LocalDateTime.now());
 
-        //update budget according to transaction
-        Optional<Budget> optionalBudget = budgetRepository.findByUserIdAndCategoryIdAndEndDateAfter(user.getUserId(), new ObjectId(category.getCategoryId()), transaction.getTransactionDate().toLocalDate());
-        optionalBudget.ifPresent(
-                budget -> budgetService.updateBudgetSpend(budget, transaction.getTransactionAmount())
-        );
+        if(transaction.getTransactionType()== Transaction.TransactionType.EXPENSE){
+            //update budget according to transaction
+            Optional<Budget> optionalBudget = budgetRepository.findByUserIdAndCategoryIdAndEndDateAfter(user.getUserId(), new ObjectId(category.getCategoryId()), transaction.getTransactionDate().toLocalDate());
+            optionalBudget.ifPresent(
+                    budget -> budgetService.updateBudgetSpend(budget, transaction.getTransactionAmount())
+            );
+
+        }
+
 
 
         return transactionRepository.save(transaction);
@@ -81,29 +91,36 @@ public class TransactionService {
     //service method to create automatic transactions from stripe wallet
     public void createAutomatedTransaction(Transaction transaction, String stripeCustomerId) {
         //transactionValidation.validateTransaction(transaction);  // Validate transaction fields
-
+        System.out.println("Service called");
         //get the current user from the token
         User user = userRepository.findByStripeCustomerId(stripeCustomerId).orElseThrow(()-> new RuntimeException("User not found"));
         Category category = categoryRepository.findByName(transaction.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
-
+        System.out.println("User found: " + user.getUserId());
+        System.out.println("Category found: " + category.getCategoryId());
         transaction.setTransactionCategory(category);
         transaction.setUserId(user.getUserId());
 
 //        if (transaction.getRecurring() == null) {
 //            transaction.setRecurring(false); // Default to false if not provided
 //        }
+//        else{
+//            LocalDateTime nextDueDate = recurringTransactionService.calculateNextDueDate(LocalDateTime.now(),transaction.getRecurrencePattern());
+//            transaction.setNextDueDate(nextDueDate);
+//        }
 
-        //LocalDateTime nextDueDate = recurringTransactionService.calculateNextDueDate(LocalDateTime.now(),transaction.getRecurrencePattern());
-        //transaction.setNextDueDate(nextDueDate);
-
-        transaction.setCreatedAt(LocalDateTime.now());
 
         //update budget according to transaction
         Optional<Budget> optionalBudget = budgetRepository.findByUserIdAndCategoryIdAndEndDateAfter(user.getUserId(), new ObjectId(category.getCategoryId()), transaction.getTransactionDate().toLocalDate());
         optionalBudget.ifPresent(budget -> budgetService.updateBudgetSpend(budget, transaction.getTransactionAmount()));
 
+        transaction.setCreatedAt(LocalDateTime.now());
         transactionRepository.save(transaction);
+
+        //send an email to user
+        emailService.sendEmail(user.getEmail(),"Automatic Transaction Record Alert","This email is to notify that a transaction created  from your Stripe Wallet is Successfully Recorded in Finance Tracker Application.");
+
         System.out.println("Automatic Transaction created from Stripe Waller Transaction");
+        transaction.printTransaction();
     }
 
 
@@ -113,9 +130,34 @@ public class TransactionService {
     }
 
     //Find a transaction by its ID.
-    public Transaction getTransactionById(String transactionId) {
-        return transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with ID: " + transactionId));
+    public TransactionResponseDTO getTransactionById(String transactionId) {
+
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new IllegalArgumentException("Transaction not found with ID: " + transactionId));
+
+        User user = userValidation.getUserFromToken();
+        String userCurrency = user.getCurrency();
+
+        BigDecimal convertedAmount = currencyService.convertCurrency(userCurrency, transaction.getTransactionAmount());
+// Map the Transaction to TransactionResponseDTO
+        return new TransactionResponseDTO(
+                transaction.getTransactionId(),
+                transaction.getUserId(),
+                transaction.getTransactionType().name(),
+                transaction.getTransactionCategory().getName(),
+                transaction.getTransactionDate(),
+                transaction.getTags(),
+                transaction.getRecurring(),
+                transaction.getRecurrencePattern(),
+                convertedAmount,//transaction.getTransactionAmount(), // used the user's prefere currency
+                transaction.getTransactionDescription(),
+                transaction.getCategoryRef(),
+                transaction.getNextDueDate(),
+                transaction.getRecurringEndDate(),
+                transaction.getCreatedAt(),
+                transaction.getUpdatedAt()
+        );
+
     }
 
     // Retrieve all transactions for a specific user.
@@ -155,7 +197,24 @@ public class TransactionService {
         transactionRepository.deleteById(transactionId);
     }
 
-    //Validate transaction has the required fields.
+    public BigDecimal calculateUserTransactions(String transactionType) {
+        User user = userValidation.getUserFromToken();
+        List<Transaction> transactions = transactionRepository.findByUserIdAndTransactionType(user.getUserId(), Transaction.TransactionType.valueOf(transactionType));
+
+        return transactions.stream()
+                .map(Transaction::getTransactionAmount) // Extract the amount
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum up amounts
+    }
+
+    public BigDecimal calculateAllTransactions(String transactionType) {
+        User user = userValidation.getUserFromToken();
+        List<Transaction> transactions = transactionRepository.findByTransactionType(Transaction.TransactionType.valueOf(transactionType));
+
+        return transactions.stream()
+                .map(Transaction::getTransactionAmount) // Extract the amount
+                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum up amounts
+    }
+
 
 
 }

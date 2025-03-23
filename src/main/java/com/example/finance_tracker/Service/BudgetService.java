@@ -66,15 +66,32 @@ public class BudgetService {
     public Budget updateBudget(String budgetId, Budget budgetDetails) {
 
         Budget budget = getBudgetById(budgetId);
-        Category category = categoryRepository.findByName(budgetDetails.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
 
-        BigDecimal newSpentAmount = budget.getSpentAmount().add(budgetDetails.getSpentAmount());
+//        BigDecimal newSpentAmount = budget.getSpentAmount().add(budgetDetails.getSpentAmount());
+//        budget.setAmount(budgetDetails.getAmount());
+//        budget.setStartDate(budgetDetails.getStartDate());
+//        budget.setEndDate(budgetDetails.getEndDate());
+//        budget.setSpentAmount(newSpentAmount);
 
-        budget.setCategory(category);
-        budget.setAmount(budgetDetails.getAmount());
-        //budget.setStartDate(budgetDetails.getStartDate());
-        budget.setEndDate(budgetDetails.getEndDate());
-        budget.setSpentAmount(newSpentAmount);
+        if (budgetDetails.getCategoryRef() != null) {
+            Category category = categoryRepository.findByName(budgetDetails.getCategoryRef()).orElseThrow(() -> new RuntimeException("Category not found"));
+            budget.setCategory(category);
+            budget.setCategoryRef(budgetDetails.getCategoryRef());
+        }
+
+        if (budgetDetails.getAmount() != null) {
+            budget.setAmount(budgetDetails.getAmount());
+        }
+        if (budgetDetails.getStartDate() != null) {
+            budget.setStartDate(budgetDetails.getStartDate());
+        }
+        if (budgetDetails.getEndDate() != null) {
+            budget.setEndDate(budgetDetails.getEndDate());
+        }
+        if (budgetDetails.getSpentAmount() != null) {
+            BigDecimal newSpentAmount = budget.getSpentAmount().add(budgetDetails.getSpentAmount());
+            budget.setSpentAmount(newSpentAmount);
+        }
 
         return budgetRepository.save(budget);
     }
@@ -92,10 +109,9 @@ public class BudgetService {
         budgetRepository.deleteById(id);
     }
 
-    //Check if user is exceeding budget (Now updates spentAmount)
-    public boolean isExceedingBudget(Budget budget, BigDecimal newExpense) {
-        BigDecimal newTotal = budget.getSpentAmount().add(newExpense);
-        return newTotal.compareTo(budget.getAmount()) > 0;
+    //Check if user is exceeding budget
+    public boolean isExceedingBudget(Budget budget) {
+        return  budget.getSpentAmount().compareTo(budget.getAmount()) > 0;
     }
 
     public Optional<Budget> getBudgetForUserAndCategory(String categoryId) {
